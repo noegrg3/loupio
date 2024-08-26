@@ -1,0 +1,221 @@
+<?php
+// Définir le fuseau horaire pour PHP
+date_default_timezone_set('Europe/Paris'); // Remplacez par votre fuseau horaire si nécessaire
+
+// Connexion au fichier de données
+$fichier = 'donnees.txt';
+
+// Lire le contenu du fichier
+$contenu = file($fichier, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+// Créer un objet DateTime pour chaque ligne
+$dates = array_map(function($ligne) {
+    $dateStr = explode(' | ', $ligne)[0];
+    return new DateTime($dateStr, new DateTimeZone('Europe/Paris')); // Assurez-vous que le fuseau horaire est le bon
+}, $contenu);
+
+// Trouver la date la plus récente
+$dernierTimestamp = !empty($dates) ? max($dates) : null;
+
+$totalHeures = 0;
+
+// Calculer le total des heures
+foreach ($contenu as $ligne) {
+    list($timestamp, $nom, $duree) = explode(' | ', $ligne);
+    $totalHeures += floatval($duree);
+}
+
+// Trier le contenu par date et heure, du plus récent au plus ancien
+usort($contenu, function($a, $b) {
+    $dateA = new DateTime(explode(' | ', $a)[0], new DateTimeZone('Europe/Paris'));
+    $dateB = new DateTime(explode(' | ', $b)[0], new DateTimeZone('Europe/Paris'));
+    return $dateB <=> $dateA;
+});
+
+$dernierTimestamp = $dernierTimestamp ? $dernierTimestamp : null;
+$maintenant = new DateTime(null, new DateTimeZone('Europe/Paris'));
+$tempsDepuisDerniereVisite = $dernierTimestamp ? $maintenant->diff($dernierTimestamp)->format(' %h heures, %i minutes') : 'Aucune visite précédente.';
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats de gestion du chat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header-banner {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            left: 0;
+            animation: slideInDown 1s ease-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .header-banner span {
+            font-size: 2rem;
+            color: #fff3cd;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-top: 80px;
+            margin-bottom: 20px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            background-color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        td:hover {
+            background-color: #f1f1f1;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #555;
+            margin: 10px 0;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: white;
+            background-color: #007bff;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        a:hover {
+            background-color: #0056b3;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-banner">
+        Temps écoulé depuis la dernière visite : <span><?php echo $tempsDepuisDerniereVisite; ?></span>
+    </div>
+
+    <h1>Résultats de gestion du chat</h1>
+    <table>
+        <tr>
+            <th>Date et Heure</th>
+            <th>Nom</th>
+            <th>Durée (minutes)</th>
+        </tr>
+        <?php foreach ($contenu as $ligne): ?>
+            <?php list($timestamp, $nom, $duree) = explode(' | ', $ligne); ?>
+            <tr>
+                <td><?php echo htmlspecialchars($timestamp); ?></td>
+                <td><?php echo htmlspecialchars($nom); ?></td>
+                <td><?php echo htmlspecialchars($duree); ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+    <br>
+    <p>Total des minutes : <?php echo $totalHeures; ?></p>
+    <br>
+    <a href="formulaire.php">Retour au formulaire</a>
+
+</body>
+</html>
