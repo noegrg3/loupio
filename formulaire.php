@@ -206,7 +206,7 @@
         </form>
     </div>
 
-    <a href="resultats.html">Voir les résultats</a>
+    <a href="resultats.php">Voir les résultats</a>
 
     <script>
         let startTime, updatedTime, difference, tInterval;
